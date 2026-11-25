@@ -1,0 +1,35 @@
+name: Build plugin
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            extra: ""
+          - os: macos-latest
+            extra: "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release "${{ matrix.extra }}"
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: RandomDrumRack-${{ runner.os }}
+          path: |
+            build/RandomDrumRack_artefacts/Release/VST3
+            build/RandomDrumRack_artefacts/Release/AU
+          if-no-files-found: warn
